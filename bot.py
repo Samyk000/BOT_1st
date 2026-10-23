@@ -176,10 +176,31 @@ def handle_other_messages(message):
     )
     bot.send_message(message.chat.id, msg_text, reply_markup=markup, disable_web_page_preview=True)
 
+import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"PCPortOP Telegram Bot is running!")
+
+    def log_message(self, format, *args):
+        pass  # silence noisy http access logs
+
+def start_health_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    logging.info(f"Render health-check server running on port {port}")
+
 if __name__ == "__main__":
     print("=" * 60)
     print("[*] PCPortOP Multi-Game Telegram Bot (@PcPortOP_bot) is RUNNING...")
     print("=" * 60)
+    start_health_server()
     try:
         bot.infinity_polling(timeout=20, long_polling_timeout=20)
     except Exception as e:
