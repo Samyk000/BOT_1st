@@ -1,40 +1,40 @@
-# PCPortOP Telegram Verification Bot
+# 🤖 PCPortOP Telegram Verification Bot
 
-This bot automatically manages user requests for the **God of War III PC Port 100% Crash-Proof Build**:
-1. Greets users with an explanation of the fix (Intel Iris Xe / Hades / Poseidon fixes).
-2. Requires them to **Watch & Like** your YouTube video, **Comment & Subscribe**, and join **`@pcportop`**.
-3. Verifies their action (via screenshot or button confirmation) and delivers the Google Drive download link automatically.
+Official verification & auto-delivery bot for PC game ports and custom crash-free builds.
 
----
-
-## 🚀 How to Run Locally (On Your Windows PC)
-
-Simply double-click:
-👉 **`start_bot.bat`**
-
-The command prompt will open and show:
-```text
-🤖 PCPortOP Telegram Bot is RUNNING...
-```
-As long as this window is open, anyone who messages `@PcPortOP_bot` will be automatically guided to your YouTube channel and given the download link.
+- **Bot Username:** [@PcPortOP_bot](https://t.me/PcPortOP_bot)
+- **Updates Channel:** [@pcportop](https://t.me/pcportop)
 
 ---
 
-## ☁️ How to Run 24/7 in the Cloud (Free)
-
-If you don't want to keep your PC on:
-1. Create a free account on [Render.com](https://render.com) or [Railway.app](https://railway.app).
-2. Create a new "Background Worker".
-3. Upload this `telegram_bot` folder (or push it to a private GitHub repo).
-4. Start Command: `python bot.py`
-The bot will run 24 hours a day, 7 days a week for free.
+## ⚡ Features
+1. **Multi-Game Catalog:** Interactive menu for God of War III Remastered, Bloodborne, and upcoming ports.
+2. **Community Verification:** Directs users to your YouTube tutorial and Telegram channel before unlocking downloads.
+3. **Automated Link Delivery:** Automatically serves the verified Google Drive link once confirmed.
+4. **Cloud Health Server:** Embedded lightweight HTTP server on port `10000` to support 24/7 hosting on Render/Railway.
 
 ---
 
-## ⚙️ Configuration
+## ⏳ Cloud Spin-Up Notice (Free Tier)
+> When hosted on free cloud instances (e.g., Render Free Tier), the service spins down after 15 minutes of inactivity.  
+> **Cold starts may take 1–5 minutes to respond to the first `/start` request.**  
+>
+> 💡 *Tip: To keep the bot active 24/7 with zero delay, add the service URL to a free monitoring service like [UptimeRobot](https://uptimerobot.com) to ping it every 5 minutes.*
 
-In `bot.py`:
-- `BOT_TOKEN`: Your `@BotFather` API token.
-- `DOWNLOAD_URL`: Your Google Drive download link.
-- `YOUTUBE_URL`: `https://youtu.be/QpJfxTSHp-s`
-- `TELEGRAM_CHANNEL_URL`: `https://t.me/pcportop`
+---
+
+## 🚀 Deployment Options
+
+### Option 1: Run 24/7 on Render (Recommended)
+1. Push this repository to GitHub.
+2. In [Render Dashboard](https://dashboard.render.com), create a **New Web Service** connected to your repo.
+3. Settings:
+   - **Environment:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `python bot.py`
+4. Add Environment Variables:
+   - `BOT_TOKEN`: Your Telegram Bot API token.
+   - `DOWNLOAD_URL`: Your Google Drive download URL.
+
+### Option 2: Run Locally (Windows)
+Double-click **`start_bot.bat`**. The bot will run in a command prompt window as long as your PC is on.
