@@ -22,6 +22,9 @@ GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4Fp
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="Markdown")
 
+# Track users who have submitted their screenshot
+screenshot_submitted_users = set()
+
 def is_user_in_channel(user_id):
     """Checks if user has joined the Telegram channel. Fails open gracefully if bot lacks admin permissions."""
     try:
@@ -53,9 +56,8 @@ def get_gow3_steps_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
     btn_yt_sub = types.InlineKeyboardButton("📺 1. Subscribe to YouTube Channel", url=YOUTUBE_CHANNEL_URL)
     btn_yt_vid = types.InlineKeyboardButton("🎬 2. Watch, Like & Comment Video", url=YOUTUBE_VIDEO_URL)
-    btn_channel = types.InlineKeyboardButton("📢 3. Join Telegram Channel (@pcportop)", url=CHANNEL_URL)
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_yt_sub, btn_yt_vid, btn_channel, btn_back)
+    markup.add(btn_yt_sub, btn_yt_vid, btn_back)
     return markup
 
 def get_verified_markup():
@@ -109,9 +111,8 @@ def handle_gow3(call):
         "⚡ **100% Crash-Proof & 60+ FPS Build [VERIFIED]**\n\n"
         "🎮 **To unlock your Google Drive download link:**\n\n"
         "1️⃣ Tap button 1 below to **Subscribe** to our Channel *(tap 'Subscribe' on popup)*.\n"
-        "2️⃣ Tap button 2 to **Watch, Like & Comment** your PC specs *(e.g. \"Testing on Intel Iris Xe\" or \"AMD Ryzen\")*.\n"
-        "3️⃣ Tap button 3 to **Join our Telegram Channel** (@pcportop).\n\n"
-        "📸 **Send a screenshot of your comment below to unlock!** 👇"
+        "2️⃣ Tap button 2 to **Watch, Like & Comment** your PC specs *(e.g. \"Testing on Intel Iris Xe\" or \"AMD Ryzen\")*.\n\n"
+        "📸 **Send a screenshot of your comment below to unlock the final step!** 👇"
     )
     bot.edit_message_text(gow3_text, call.message.chat.id, call.message.message_id, reply_markup=get_gow3_steps_markup(), disable_web_page_preview=True)
 
@@ -168,32 +169,34 @@ def handle_channel_join(chat_member_update):
 @bot.message_handler(content_types=["photo"])
 def handle_screenshot(message):
     user_id = message.from_user.id
+    screenshot_submitted_users.add(user_id)
     
-    # Check if user has joined the Telegram channel
-    if not is_user_in_channel(user_id):
-        join_warning = (
-            "📸 **Screenshot Received!**\n\n"
-            "📢 **Final Step:** Join our official Telegram Channel **@pcportop** to unlock your GoW3 download file!\n\n"
-            "👉 Tap **Join Telegram Channel** below, then tap **Verify & Get Download File**:"
+    # EDGE CASE: User is ALREADY in the Telegram channel!
+    if is_user_in_channel(user_id):
+        success_text = (
+            "🎉 **Screenshot & Channel Membership Verified!**\n\n"
+            "📦 **GoW3 PC Port — 100% Crash-Proof iGPU Build**\n"
+            "• Tested & confirmed on Intel Iris Xe / UHD / AMD Vega\n"
+            "• Zero crashes at Hades, Poseidon & heavy cutscenes\n"
+            "• Locked 60+ FPS performance tweaks included\n\n"
+            "👇 **Click below to get your download file:**"
         )
-        markup = types.InlineKeyboardMarkup(row_width=1)
-        markup.add(
-            types.InlineKeyboardButton("📢 3. Join Telegram Channel (@pcportop)", url=CHANNEL_URL),
-            types.InlineKeyboardButton("🔓 Verify & Get Download File", callback_data="verify_channel_after_screenshot"),
-            types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-        )
-        bot.reply_to(message, join_warning, reply_markup=markup)
+        bot.reply_to(message, success_text, reply_markup=get_verified_markup())
         return
 
-    success_text = (
-        "🎉 **All Steps Completed & Verified!**\n\n"
-        "📦 **GoW3 PC Port — 100% Crash-Proof iGPU Build**\n"
-        "• Tested & confirmed on Intel Iris Xe / UHD / AMD Vega\n"
-        "• Zero crashes at Hades, Poseidon & heavy cutscenes\n"
-        "• Locked 60+ FPS performance tweaks included\n\n"
-        "👇 **Click below to get your download file:**"
+    # User has NOT joined the channel yet:
+    join_warning = (
+        "📸 **Screenshot Received! One Final Step:**\n\n"
+        "📢 Join our official Telegram Channel **@pcportop** to unlock your GoW3 download file!\n\n"
+        "*(⚡ As soon as you tap Join Channel, the bot will automatically send you the download link!)*"
     )
-    bot.reply_to(message, success_text, reply_markup=get_verified_markup())
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        types.InlineKeyboardButton("📢 3. Join Telegram Channel (@pcportop)", url=CHANNEL_URL),
+        types.InlineKeyboardButton("🔓 I've Joined — Get Download Link", callback_data="verify_channel_after_screenshot"),
+        types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
+    )
+    bot.reply_to(message, join_warning, reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data == "verify_channel_after_screenshot")
 def handle_verify_channel_after_screenshot(call):
