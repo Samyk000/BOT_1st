@@ -2,6 +2,9 @@ import telebot
 from telebot import types
 import logging
 import sys
+import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Configure stdout for Windows/Unicode safety
 if hasattr(sys.stdout, 'reconfigure'):
@@ -13,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 BOT_TOKEN = "8355770693:AAF5Amxsq_p5BCBH9-D1VM3KTdy3g7Abm1E"
 CHANNEL_USERNAME = "@pcportop"
 CHANNEL_URL = "https://t.me/pcportop"
-YOUTUBE_CHANNEL_URL = "http://www.youtube.com/@pcportop"
+YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@pcportop?sub_confirmation=1"
 YOUTUBE_VIDEO_URL = "https://youtu.be/QpJfxTSHp-s"
 GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4FpF-t9hC/view?usp=sharing"
 
@@ -27,7 +30,6 @@ def is_user_in_channel(user_id):
             return False
         return True
     except Exception as e:
-        # If bot is not admin or channel check fails, allow user through to avoid frustration
         logging.warning(f"Channel check skipped: {e}")
         return True
 
@@ -49,19 +51,26 @@ def get_games_menu_markup():
 
 def get_gow3_steps_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_yt_sub = types.InlineKeyboardButton("📺 1. Subscribe to YouTube Channel", url=YOUTUBE_CHANNEL_URL)
-    btn_yt_vid = types.InlineKeyboardButton("🎬 2. Watch, Like & Comment Video", url=YOUTUBE_VIDEO_URL)
-    btn_channel = types.InlineKeyboardButton("📢 3. Join Telegram Channel (@pcportop)", url=CHANNEL_URL)
+    btn_yt_vid = types.InlineKeyboardButton("🎬 Watch, Like & Comment Video", url=YOUTUBE_VIDEO_URL)
+    btn_channel = types.InlineKeyboardButton("📢 Join Telegram Channel (@pcportop)", url=CHANNEL_URL)
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_yt_sub, btn_yt_vid, btn_channel, btn_back)
+    markup.add(btn_yt_vid, btn_channel, btn_back)
     return markup
 
-def get_download_markup():
+def get_verified_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_download = types.InlineKeyboardButton("📥 Download God of War III Fix (Google Drive)", url=GOW3_DOWNLOAD_URL)
-    btn_channel = types.InlineKeyboardButton("📢 Join @pcportop for Future Game Fixes", url=CHANNEL_URL)
+    btn_download = types.InlineKeyboardButton("📥 Download GoW3 Fix", callback_data="dl_gow3")
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_download, btn_channel, btn_back)
+    markup.add(btn_download, btn_back)
+    return markup
+
+def get_post_download_markup():
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    btn_drive = types.InlineKeyboardButton("📥 Open Google Drive Link", url=GOW3_DOWNLOAD_URL)
+    btn_comment = types.InlineKeyboardButton("💬 Comment Specs on YouTube", url=YOUTUBE_VIDEO_URL)
+    btn_channel = types.InlineKeyboardButton("📢 Join @pcportop for Future Updates", url=CHANNEL_URL)
+    btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
+    markup.add(btn_drive, btn_comment, btn_channel, btn_back)
     return markup
 
 def get_dev_markup():
@@ -97,19 +106,10 @@ def handle_gow3(call):
     gow3_text = (
         "⚔️ **God of War III Remastered (PC Port)**\n"
         "⚡ **100% Crash-Proof & 60+ FPS Build [VERIFIED]**\n\n"
-        "🛡️ **What this build fixes:**\n"
-        "• **Zero crashes at Hades Boss Fight & Death Cutscene**\n"
-        "• **Zero crashes at Poseidon Water & Leviathan battles**\n"
-        "• Fully optimized for **Intel Iris Xe, Intel UHD, Arc & AMD Vega** iGPUs\n"
-        "• Solved Vulkan compute workgroup & memory carve-out exhaustion\n\n"
-        "---\n"
-        "🔒 **TO UNLOCK THE DOWNLOAD FILE:**\n\n"
-        "1️⃣ **Subscribe** to our YouTube Channel:\n"
-        "👉 [http://www.youtube.com/@pcportop](http://www.youtube.com/@pcportop)\n\n"
-        "2️⃣ **Like & Comment** on our GoW3 Video:\n"
-        "👉 [https://youtu.be/QpJfxTSHp-s](https://youtu.be/QpJfxTSHp-s)\n\n"
-        "3️⃣ **Join** our Telegram Channel: `@pcportop`\n\n"
-        "📸 **Once done, simply SEND A SCREENSHOT of your subscription/comment right here in this chat to unlock the download link immediately!** 👇"
+        "🎮 **To unlock your Google Drive download link:**\n"
+        "1️⃣ Open the video below, hit **Like & Subscribe**.\n"
+        "2️⃣ Comment your PC specs *(e.g. \"Testing on Intel Iris Xe\" or \"AMD Ryzen\")*.\n\n"
+        "📸 **Send a screenshot of your comment below to unlock!** 👇"
     )
     bot.edit_message_text(gow3_text, call.message.chat.id, call.message.message_id, reply_markup=get_gow3_steps_markup(), disable_web_page_preview=True)
 
@@ -145,40 +145,72 @@ def handle_screenshot(message):
         join_warning = (
             "⚠️ **Almost there!**\n\n"
             "We received your screenshot, but you haven't joined our Telegram channel yet!\n\n"
-            "👉 Please join **@pcportop** first, then re-send your screenshot to get the download file!"
+            "👉 Please join **@pcportop** below, then tap **Verify** to get your download file:"
         )
         markup = types.InlineKeyboardMarkup(row_width=1)
-        markup.add(types.InlineKeyboardButton("📢 Join Telegram Channel (@pcportop)", url=CHANNEL_URL))
+        markup.add(
+            types.InlineKeyboardButton("📢 Join Telegram Channel (@pcportop)", url=CHANNEL_URL),
+            types.InlineKeyboardButton("✅ I've Joined — Unlock Build", callback_data="verify_channel_after_screenshot"),
+            types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
+        )
         bot.reply_to(message, join_warning, reply_markup=markup)
         return
 
     success_text = (
         "🎉 **Screenshot Verified! Thank you for supporting the channel!**\n\n"
-        "📦 **God of War III PC Port - 100% Crash-Proof iGPU Build**\n"
+        "📦 **GoW3 PC Port - 100% Crash-Proof iGPU Build**\n"
         "• Tested & confirmed on Intel Iris Xe / UHD / AMD Vega\n"
         "• Zero crashes at Hades, Poseidon, cutscenes & asset transitions\n"
         "• Locked 60+ FPS performance tweaks included\n\n"
-        "👇 **Click the button below to download directly from Google Drive:**"
+        "👇 **Click the button below to download directly:**"
     )
-    bot.reply_to(message, success_text, reply_markup=get_download_markup())
+    bot.reply_to(message, success_text, reply_markup=get_verified_markup())
+
+@bot.callback_query_handler(func=lambda call: call.data == "verify_channel_after_screenshot")
+def handle_verify_channel_after_screenshot(call):
+    if not is_user_in_channel(call.from_user.id):
+        bot.answer_callback_query(call.id, text="⚠️ You haven't joined @pcportop yet! Please join first.", show_alert=True)
+        return
+        
+    bot.answer_callback_query(call.id, text="🎉 Channel verified!")
+    success_text = (
+        "🎉 **Channel & Screenshot Verified! Thank you!**\n\n"
+        "📦 **GoW3 PC Port - 100% Crash-Proof iGPU Build**\n"
+        "• Tested & confirmed on Intel Iris Xe / UHD / AMD Vega\n"
+        "• Zero crashes at Hades, Poseidon, cutscenes & asset transitions\n"
+        "• Locked 60+ FPS performance tweaks included\n\n"
+        "👇 **Click the button below to download directly:**"
+    )
+    bot.send_message(call.message.chat.id, success_text, reply_markup=get_verified_markup())
+
+@bot.callback_query_handler(func=lambda call: call.data == "dl_gow3")
+def handle_download_gow3(call):
+    bot.answer_callback_query(call.id, text="🚀 Generating download link...")
+    
+    post_dl_text = (
+        "🚀 **Your GoW3 Crash-Proof Build is ready!**\n\n"
+        "📦 **Direct Download Link:**\n"
+        f"👉 [Click here to open Google Drive]({GOW3_DOWNLOAD_URL})\n\n"
+        "💬 **One Small Favor:**\n"
+        "Once you test the game, please reply on the video:\n"
+        "👉 *\"It worked on my [Your Specs]!\"*\n\n"
+        "*(This helps fellow gamers know it's 100% working! 🎮)*"
+    )
+    bot.send_message(call.message.chat.id, post_dl_text, reply_markup=get_post_download_markup(), disable_web_page_preview=True)
 
 @bot.message_handler(func=lambda msg: True)
 def handle_other_messages(message):
     msg_text = (
         "👋 **Welcome to PCPortOP!**\n\n"
         "• To view all available games, send: `/start`\n"
-        "• To unlock the **God of War III** crash-proof build, please send a **screenshot** showing you subscribed to our YouTube channel ([@pcportop](http://www.youtube.com/@pcportop))!"
+        "• To unlock the **GoW3** crash-proof build, please send a **screenshot** showing you subscribed and commented on our YouTube video ([@pcportop](https://www.youtube.com/@pcportop))!"
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
         types.InlineKeyboardButton("🎮 Open Games Menu", callback_data="main_menu"),
-        types.InlineKeyboardButton("📺 Visit YouTube Channel", url=YOUTUBE_CHANNEL_URL)
+        types.InlineKeyboardButton("🎬 Watch Video & Comment", url=YOUTUBE_VIDEO_URL)
     )
     bot.send_message(message.chat.id, msg_text, reply_markup=markup, disable_web_page_preview=True)
-
-import os
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
