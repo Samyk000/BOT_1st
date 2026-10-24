@@ -53,8 +53,9 @@ def get_gow3_steps_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
     btn_yt_sub = types.InlineKeyboardButton("📺 1. Subscribe to YouTube Channel", url=YOUTUBE_CHANNEL_URL)
     btn_yt_vid = types.InlineKeyboardButton("🎬 2. Watch, Like & Comment Video", url=YOUTUBE_VIDEO_URL)
+    btn_channel = types.InlineKeyboardButton("📢 3. Join Telegram Channel (@pcportop)", url=CHANNEL_URL)
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_yt_sub, btn_yt_vid, btn_back)
+    markup.add(btn_yt_sub, btn_yt_vid, btn_channel, btn_back)
     return markup
 
 def get_verified_markup():
@@ -106,10 +107,11 @@ def handle_gow3(call):
     gow3_text = (
         "⚔️ **God of War III Remastered (PC Port)**\n"
         "⚡ **100% Crash-Proof & 60+ FPS Build [VERIFIED]**\n\n"
-        "🎮 **Complete these 2 quick steps to unlock your file:**\n\n"
-        "1️⃣ Tap button 1 below to **Subscribe** to our Channel *(tap 'Subscribe' on the popup)*.\n"
-        "2️⃣ Tap button 2 to **Watch, Like & Comment** on the video with your PC specs *(e.g. \"Testing on Intel Iris Xe\" or \"AMD Ryzen\")*.\n\n"
-        "📸 **Send a screenshot of your comment right here in this chat to continue!** 👇"
+        "🎮 **To unlock your Google Drive download link:**\n\n"
+        "1️⃣ Tap button 1 below to **Subscribe** to our Channel *(tap 'Subscribe' on popup)*.\n"
+        "2️⃣ Tap button 2 to **Watch, Like & Comment** your PC specs *(e.g. \"Testing on Intel Iris Xe\" or \"AMD Ryzen\")*.\n"
+        "3️⃣ Tap button 3 to **Join our Telegram Channel** (@pcportop).\n\n"
+        "📸 **Send a screenshot of your comment below to unlock!** 👇"
     )
     bot.edit_message_text(gow3_text, call.message.chat.id, call.message.message_id, reply_markup=get_gow3_steps_markup(), disable_web_page_preview=True)
 
@@ -135,6 +137,33 @@ def handle_under_development(call):
         f"Join our Telegram channel `@pcportop` and subscribe to our YouTube channel! We will post direct download links the moment it is ready."
     )
     bot.edit_message_text(dev_text, call.message.chat.id, call.message.message_id, reply_markup=get_dev_markup())
+
+@bot.chat_member_handler()
+def handle_channel_join(chat_member_update):
+    """Automatically triggered the exact second a user joins @pcportop!"""
+    try:
+        chat = chat_member_update.chat
+        if chat.username and f"@{chat.username.lower()}" == CHANNEL_USERNAME.lower():
+            new_status = chat_member_update.new_chat_member.status
+            user = chat_member_update.new_chat_member.user
+            if new_status in ['member', 'administrator', 'creator']:
+                user_id = user.id
+                logging.info(f"User {user_id} joined {CHANNEL_USERNAME}!")
+                
+                welcome_text = (
+                    "🎉 **Welcome to @pcportop! Channel Membership Verified!** 🚀\n\n"
+                    "📦 **God of War III PC Port — 100% Crash-Proof Build**\n"
+                    "• Tested & confirmed on Intel Iris Xe / UHD / AMD Vega\n"
+                    "• Zero crashes at Hades, Poseidon & heavy cutscenes\n"
+                    "• Locked 60+ FPS performance tweaks included\n\n"
+                    "👇 **Click below to get your download file:**"
+                )
+                try:
+                    bot.send_message(user_id, welcome_text, reply_markup=get_verified_markup())
+                except Exception as e:
+                    logging.info(f"Could not push instant join message to {user_id}: {e}")
+    except Exception as e:
+        logging.error(f"Error in chat_member_handler: {e}")
 
 @bot.message_handler(content_types=["photo"])
 def handle_screenshot(message):
@@ -237,6 +266,6 @@ if __name__ == "__main__":
     print("=" * 60)
     start_health_server()
     try:
-        bot.infinity_polling(timeout=20, long_polling_timeout=20)
+        bot.infinity_polling(timeout=20, long_polling_timeout=20, allowed_updates=["message", "callback_query", "chat_member", "my_chat_member"])
     except Exception as e:
         logging.error(f"Bot error: {e}")
