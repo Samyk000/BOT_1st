@@ -17,7 +17,7 @@ BOT_TOKEN = "8355770693:AAF5Amxsq_p5BCBH9-D1VM3KTdy3g7Abm1E"
 CHANNEL_USERNAME = "@pcportop"
 CHANNEL_URL = "https://t.me/pcportop"
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@pcportop?sub_confirmation=1"
-YOUTUBE_VIDEO_URL = "https://youtu.be/ajkVuRHIM50"
+YOUTUBE_VIDEO_URL = "https://youtu.be/QpJfxTSHp-s"
 GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4FpF-t9hC/view?usp=sharing"
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="Markdown")
