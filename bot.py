@@ -22,7 +22,7 @@ CHANNEL_URL = "https://t.me/pcportop"
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@pcportop?sub_confirmation=1"
 YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=RRTnew63j48"
 GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4FpF-t9hC/view?usp=sharing"
-GOW3_V3_DOWNLOAD_URL = "https://drive.google.com/file/d/1FfCBB-Wj9CI4xZqM3fDdW3-FFzs0_IEV/view?usp=sharing"
+GOW3_V3_DOWNLOAD_URL = "https://drive.google.com/file/d/1iw4397mi-BZgLWgQXhwtsrH9RryAnZiY/view?usp=sharing"
 
 SECRET_SALT = "PCPortOP_Demo_Secret_2026"
 HWID_REGEX = re.compile(r"^GOW3-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}$", re.IGNORECASE)
