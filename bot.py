@@ -4,6 +4,7 @@ import logging
 import sys
 import os
 import json
+import re
 import threading
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -22,6 +23,9 @@ YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@pcportop?sub_confirmation=1"
 YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=RRTnew63j48"
 GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4FpF-t9hC/view?usp=sharing"
 
+SECRET_SALT = "PCPortOP_Demo_Secret_2026"
+HWID_REGEX = re.compile(r"^GOW3-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}$", re.IGNORECASE)
+
 # Data persistence file
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bot_data.json")
 
@@ -30,6 +34,23 @@ bot = telebot.TeleBot(BOT_TOKEN, parse_mode="Markdown")
 # Track users who have submitted their screenshot in this session
 screenshot_submitted_users = set()
 
+# --- Cryptographic Key Engine ---
+
+def fnv1a64(text: str) -> int:
+    hash_val = 14695981039346656037
+    for b in text.encode("utf-8"):
+        hash_val ^= b
+        hash_val = (hash_val * 1099511628211) & 0xFFFFFFFFFFFFFFFF
+    return hash_val
+
+def generate_key_for_hwid(hwid: str) -> str:
+    clean_hwid = hwid.strip().upper()
+    combined = f"{clean_hwid}:{SECRET_SALT}"
+    h = fnv1a64(combined)
+    k1 = (h >> 16) & 0xFFFF
+    k2 = h & 0xFFFF
+    return f"ACT-{k1:04X}-{k2:04X}"
+
 # --- Data Persistence & Subscriber Progress Utilities ---
 
 def load_data():
@@ -37,7 +58,8 @@ def load_data():
         "base_subs": 150,
         "target_subs": 500,
         "claimed_users": [],
-        "user_profiles": {}
+        "user_profiles": {},
+        "activations": {}
     }
     if not os.path.exists(DATA_FILE):
         save_data(default_data)
@@ -78,6 +100,39 @@ def record_user_claim(user):
     save_data(data)
     current_subs = data["base_subs"] + len(data["claimed_users"])
     return current_subs, data["target_subs"], is_new
+
+def record_activation_key(user, hwid: str, key: str):
+    """Records key generation. Returns (success, key, status)"""
+    data = load_data()
+    if "activations" not in data:
+        data["activations"] = {}
+    
+    user_id_str = str(user.id)
+    if user_id_str not in data["activations"]:
+        data["activations"][user_id_str] = {
+            "username": user.username or "",
+            "first_name": user.first_name or "",
+            "devices": {}
+        }
+    
+    user_record = data["activations"][user_id_str]
+    clean_hwid = hwid.strip().upper()
+    
+    # Check if already activated for this exact HWID
+    if clean_hwid in user_record["devices"]:
+        return True, user_record["devices"][clean_hwid]["key"], "existing"
+    
+    # Rate limiting: Max 2 devices per Telegram user
+    if len(user_record["devices"]) >= 2:
+        return False, None, "limit_reached"
+    
+    # Record new device key
+    user_record["devices"][clean_hwid] = {
+        "key": key,
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    }
+    save_data(data)
+    return True, key, "new"
 
 def get_subscriber_stats():
     data = load_data()
@@ -173,14 +228,19 @@ def handle_stats(message):
     progress_str = get_progress_bar(current_subs, target_subs)
     data = load_data()
     
+    activations_dict = data.get("activations", {})
+    total_keys = sum(len(u.get("devices", {})) for u in activations_dict.values())
+    total_active_users = len(activations_dict)
+    
     stats_text = (
         "📊 **PCPortOP Bot Live Stats**\n\n"
-        f"👥 **Total Unique V1 Downloaders:** `{claimed_count}`\n"
+        f"👥 **Unique V1 Downloaders:** `{claimed_count}`\n"
+        f"🔑 **V3 Keys Issued:** `{total_keys}` (across `{total_active_users}` users)\n"
         f"📈 **Base Subs Config:** `{data.get('base_subs', 150)}`\n"
         f"🚀 **Current Displayed Subs:** `{current_subs}` / `{target_subs}`\n"
         f"📊 **V3 Progress:** {progress_str}\n\n"
-        "⚙️ **Admin Sub Sync:**\n"
-        "To update the base YouTube subscriber count anytime, send:\n"
+        "⚙️ **Admin Quick Sync:**\n"
+        "To update the base YouTube subscriber count, send:\n"
         "`/setsubs <number>` (e.g. `/setsubs 180`)"
     )
     bot.reply_to(message, stats_text)
@@ -327,9 +387,9 @@ def handle_gow3_v3_info(call):
     v3_text = (
         "🚀 **God of War III — V3 Update**\n"
         "*(Clean Cutscenes + Peak 60 FPS + Zero Distortion)*\n\n"
-        f"🎯 **Unlocks at {target_subs} YouTube Subscribers!**\n"
+        f"🎯 **Community Goal:** Unlocks at **{target_subs} YouTube Subscribers**!\n"
         f"📊 **Current Progress:** {progress_str}\n\n"
-        "💡 *V3 will be shared the moment we hit 500 subs. In the meantime, you can play the 100% crash-proof V1 build right now:* 👇"
+        "💡 *If you already have the V3 community build, simply send your Machine Code (e.g. `GOW3-XXXX-XXXX`) to this bot to unlock it instantly!*"
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
     btn_v1 = types.InlineKeyboardButton("📥 Download GoW3 (V1 - No Crash)", callback_data="dl_gow3")
@@ -352,12 +412,64 @@ def handle_download_gow3(call):
     )
     bot.send_message(call.message.chat.id, post_dl_text, reply_markup=get_post_download_markup(), disable_web_page_preview=True)
 
+# --- HWID Node-Lock Activation Handler ---
+
+@bot.message_handler(func=lambda msg: bool(msg.text and HWID_REGEX.match(msg.text.strip())))
+def handle_hwid_code(message):
+    raw_hwid = message.text.strip().upper()
+    user_id = message.from_user.id
+    
+    # 1. Verify channel membership first
+    if not is_user_in_channel(user_id):
+        join_msg = (
+            "📢 **Join @pcportop to Get Your Key!**\n\n"
+            "To unlock the **God of War III (V3)** community build, you must be a member of our official Telegram channel.\n\n"
+            "👉 Tap below to join, then send your machine code again!"
+        )
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            types.InlineKeyboardButton("📢 Join @pcportop", url=CHANNEL_URL)
+        )
+        bot.reply_to(message, join_msg, reply_markup=markup)
+        return
+    
+    # 2. Generate matching key
+    key = generate_key_for_hwid(raw_hwid)
+    success, final_key, status = record_activation_key(message.from_user, raw_hwid, key)
+    
+    if not success and status == "limit_reached":
+        limit_msg = (
+            "⚠️ **Activation Limit Reached**\n\n"
+            "Each Telegram member can activate up to **2 PCs**.\n"
+            "If you reinstalled Windows or need help, please reach out in @pcportop."
+        )
+        bot.reply_to(message, limit_msg)
+        return
+    
+    # 3. Deliver activation key
+    key_msg = (
+        "⚔️ **God of War III (V3) — Activation Key**\n\n"
+        f"🖥️ **Machine Code:** `{raw_hwid}`\n"
+        f"🔑 **Your Key:** `{final_key}` *(Tap to copy)*\n\n"
+        "🎮 **How to activate:**\n"
+        "1. Paste this key into the game window.\n"
+        "2. Click **\"⚔️ UNLOCK & LAUNCH GAME\"**.\n\n"
+        "*(The game will be permanently unlocked on your PC!)*"
+    )
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        types.InlineKeyboardButton("📺 Subscribe on YouTube", url=YOUTUBE_CHANNEL_URL),
+        types.InlineKeyboardButton("📢 Telegram Updates Channel", url=CHANNEL_URL)
+    )
+    bot.reply_to(message, key_msg, reply_markup=markup)
+
 @bot.message_handler(func=lambda msg: True)
 def handle_other_messages(message):
     msg_text = (
         "👋 **Welcome to PCPortOP!**\n\n"
         "• To view all available games, send: `/start`\n"
-        "• To unlock the **GoW3** crash-proof build, please send a **screenshot** showing you subscribed and commented on our YouTube video ([@pcportop](https://www.youtube.com/@pcportop))!"
+        "• To unlock **GoW3 (V1)**, please send a **screenshot** showing you subscribed and commented on our YouTube video ([@pcportop](https://www.youtube.com/@pcportop))!\n"
+        "• To get a **V3 Activation Key**, simply send your Machine Code (e.g. `GOW3-XXXX-XXXX`)."
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
