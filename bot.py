@@ -22,6 +22,7 @@ CHANNEL_URL = "https://t.me/pcportop"
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@pcportop?sub_confirmation=1"
 YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=RRTnew63j48"
 GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4FpF-t9hC/view?usp=sharing"
+GOW3_V3_DOWNLOAD_URL = "https://drive.google.com/file/d/1FfCBB-Wj9CI4xZqM3fDdW3-FFzs0_IEV/view?usp=sharing"
 
 SECRET_SALT = "PCPortOP_Demo_Secret_2026"
 HWID_REGEX = re.compile(r"^GOW3-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}$", re.IGNORECASE)
@@ -385,17 +386,22 @@ def handle_gow3_v3_info(call):
     progress_str = get_progress_bar(current_subs, target_subs)
     
     v3_text = (
-        "🚀 **God of War III — V3 Update**\n"
-        "*(Clean Cutscenes + Peak 60 FPS + Zero Distortion)*\n\n"
-        f"🎯 **Community Goal:** Unlocks at **{target_subs} YouTube Subscribers**!\n"
-        f"📊 **Current Progress:** {progress_str}\n\n"
-        "💡 *If you already have the V3 community build, simply send your Machine Code (e.g. `GOW3-XXXX-XXXX`) to this bot to unlock it instantly!*"
+        "🚀 **God of War III — V3 Community Early Access**\n"
+        "*(Clean Cutscenes + Peak 60 FPS + Zero Warping)*\n\n"
+        "📦 **Download V3 Build:**\n"
+        f"👉 [Click here to open Google Drive]({GOW3_V3_DOWNLOAD_URL})\n\n"
+        "⚠️ **IMPORTANT INSTRUCTION:**\n"
+        "1. Rename the downloaded file to: **`spartanport-probe.exe`**\n"
+        "2. Paste & replace it inside your game's **`bin`** folder.\n"
+        "3. Launch the game, copy your **Machine Code**, and send it here to get your activation key!\n\n"
+        f"📊 **Milestone Progress:** {progress_str}"
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_v1 = types.InlineKeyboardButton("📥 Download GoW3 (V1 - No Crash)", callback_data="dl_gow3")
+    btn_dl_v3 = types.InlineKeyboardButton("📥 Download V3 (Google Drive)", url=GOW3_V3_DOWNLOAD_URL)
+    btn_v1 = types.InlineKeyboardButton("📥 Download V1 Build", callback_data="dl_gow3")
     btn_yt = types.InlineKeyboardButton("📺 Subscribe on YouTube", url=YOUTUBE_CHANNEL_URL)
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_v1, btn_yt, btn_back)
+    markup.add(btn_dl_v3, btn_v1, btn_yt, btn_back)
     
     bot.edit_message_text(v3_text, call.message.chat.id, call.message.message_id, reply_markup=markup, disable_web_page_preview=True)
 
@@ -452,8 +458,9 @@ def handle_hwid_code(message):
         f"🖥️ **Machine Code:** `{raw_hwid}`\n"
         f"🔑 **Your Key:** `{final_key}` *(Tap to copy)*\n\n"
         "🎮 **How to activate:**\n"
-        "1. Paste this key into the game window.\n"
-        "2. Click **\"⚔️ UNLOCK & LAUNCH GAME\"**.\n\n"
+        "1. Ensure the file is renamed to **`spartanport-probe.exe`** inside your game's **`bin`** folder.\n"
+        "2. Paste this key into the activation window.\n"
+        "3. Click **\"⚔️ UNLOCK & LAUNCH GAME\"**.\n\n"
         "*(The game will be permanently unlocked on your PC!)*"
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
