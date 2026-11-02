@@ -22,7 +22,7 @@ CHANNEL_URL = "https://t.me/pcportop"
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@pcportop?sub_confirmation=1"
 YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=RRTnew63j48"
 GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4FpF-t9hC/view?usp=sharing"
-GOW3_V3_DOWNLOAD_URL = "https://drive.google.com/file/d/1iw4397mi-BZgLWgQXhwtsrH9RryAnZiY/view?usp=sharing"
+GOW3_V4_DOWNLOAD_URL = "https://drive.google.com/file/d/105NH1hQgfnUr1GhIMOix2NkNLAKidYf1/view?usp=sharing"
 
 SECRET_SALT = "PCPortOP_Demo_Secret_2026"
 HWID_REGEX = re.compile(r"^GOW3-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}$", re.IGNORECASE)
@@ -207,9 +207,9 @@ def get_gow3_steps_markup():
 def get_verified_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
     btn_v1 = types.InlineKeyboardButton("📥 Download GoW3 (V1 - No Crash)", callback_data="dl_gow3")
-    btn_v3 = types.InlineKeyboardButton("🚀 Download GoW3 (V3 - Best Graphics & FPS)", callback_data="gow3_v3_info")
+    btn_v4 = types.InlineKeyboardButton("⚡ Download GoW3 (V4 - 2X FPS & Low-End/iGPU Boost)", callback_data="gow3_v4_info")
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_v1, btn_v3, btn_back)
+    markup.add(btn_v1, btn_v4, btn_back)
     return markup
 
 def get_post_download_markup():
@@ -253,10 +253,10 @@ def handle_stats(message):
     stats_text = (
         "📊 **PCPortOP Bot Live Stats**\n\n"
         f"👥 **Unique V1 Downloaders:** `{claimed_count}`\n"
-        f"🔑 **V3 Keys Issued:** `{total_keys}` (across `{total_active_users}` users)\n"
+        f"🔑 **V4 Keys Issued:** `{total_keys}` (across `{total_active_users}` users)\n"
         f"📈 **Base Subs Config:** `{data.get('base_subs', 150)}`\n"
         f"🚀 **Current Displayed Subs:** `{current_subs}` / `{target_subs}`\n"
-        f"📊 **V3 Progress:** {progress_str}\n\n"
+        f"📊 **V4 Progress:** {progress_str}\n\n"
         "⚙️ **Admin Quick Sync:**\n"
         "To update the base YouTube subscriber count, send:\n"
         "`/setsubs <number>` (e.g. `/setsubs 180`)"
@@ -415,31 +415,36 @@ def handle_verify_channel_after_screenshot(call):
     except Exception:
         bot.send_message(call.message.chat.id, success_text, reply_markup=get_verified_markup())
 
-@bot.callback_query_handler(func=lambda call: call.data == "gow3_v3_info")
-def handle_gow3_v3_info(call):
+@bot.callback_query_handler(func=lambda call: call.data in ["gow3_v4_info", "gow3_v3_info"])
+def handle_gow3_v4_info(call):
     bot.answer_callback_query(call.id)
     current_subs, target_subs, _ = get_subscriber_stats()
     progress_str = get_progress_bar(current_subs, target_subs)
     
-    v3_text = (
-        "🚀 **God of War III — V3 Community Early Access**\n"
-        "*(Clean Cutscenes + Peak 60 FPS + Zero Warping)*\n\n"
-        "📦 **Download V3 Build:**\n"
-        f"👉 [Click here to open Google Drive]({GOW3_V3_DOWNLOAD_URL})\n\n"
-        "⚠️ **IMPORTANT INSTRUCTION:**\n"
+    v4_text = (
+        "⚡ **God of War III — V4 Community Master Build**\n"
+        "*(🔥 2X Performance on Intel & AMD Integrated GPUs + Anti-Overheating Thermal Lock)*\n\n"
+        "✨ **What's New in V4:**\n"
+        "• **2X More Optimized:** Auto-detects Intel Iris / Iris Xe / UHD & AMD Vega / Radeon APUs.\n"
+        "• **Smart 720p Quality FSR 3.1 Scaling:** Cuts pixel load by 55% for buttery-smooth 50–60 FPS.\n"
+        "• **Laptop Anti-Overheating Lock:** Auto-paces tick rate to prevent CPU thermal throttling & lag spikes.\n"
+        "• **Zero Ghosting & Smooth Motion:** Preserves smooth camera & object motion vectors across all cutscenes.\n\n"
+        "📦 **Download V4 Build:**\n"
+        f"👉 [Click here to open Google Drive]({GOW3_V4_DOWNLOAD_URL})\n\n"
+        "⚠️ **INSTALLATION INSTRUCTIONS:**\n"
         "1. Rename the downloaded file to: **`spartanport-probe.exe`**\n"
         "2. Paste & replace it inside your game's **`bin`** folder.\n"
-        "3. Launch the game, copy your **Machine Code**, and send it here to get your activation key!\n\n"
+        "3. Launch the game, copy your **Machine Code** (`GOW3-XXXX-XXXX`), and send it here to get your permanent activation key!\n\n"
         f"📊 **Milestone Progress:** {progress_str}"
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_dl_v3 = types.InlineKeyboardButton("📥 Download V3 (Google Drive)", url=GOW3_V3_DOWNLOAD_URL)
-    btn_v1 = types.InlineKeyboardButton("📥 Download V1 Build", callback_data="dl_gow3")
+    btn_dl_v4 = types.InlineKeyboardButton("📥 Download V4 (Google Drive)", url=GOW3_V4_DOWNLOAD_URL)
+    btn_v1 = types.InlineKeyboardButton("📥 Download V1 Legacy Build", callback_data="dl_gow3")
     btn_yt = types.InlineKeyboardButton("📺 Subscribe on YouTube", url=YOUTUBE_CHANNEL_URL)
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_dl_v3, btn_v1, btn_yt, btn_back)
+    markup.add(btn_dl_v4, btn_v1, btn_yt, btn_back)
     
-    bot.edit_message_text(v3_text, call.message.chat.id, call.message.message_id, reply_markup=markup, disable_web_page_preview=True)
+    bot.edit_message_text(v4_text, call.message.chat.id, call.message.message_id, reply_markup=markup, disable_web_page_preview=True)
 
 @bot.callback_query_handler(func=lambda call: call.data == "dl_gow3")
 def handle_download_gow3(call):
@@ -465,7 +470,7 @@ def handle_hwid_code(message):
     if not is_user_in_channel(user_id):
         join_msg = (
             "📢 **Join @pcportop to Get Your Key!**\n\n"
-            "To unlock the **God of War III (V3)** community build, you must be a member of our official Telegram channel.\n\n"
+            "To unlock the **God of War III (V4)** community build, you must be a member of our official Telegram channel.\n\n"
             "👉 Tap below to join, then send your machine code again!"
         )
         markup = types.InlineKeyboardMarkup(row_width=1)
@@ -508,7 +513,7 @@ def handle_hwid_code(message):
     
     # 3. Deliver activation key
     key_msg = (
-        "⚔️ **God of War III (V3) — Activation Key**\n\n"
+        "⚔️ **God of War III (V4) — Activation Key**\n\n"
         f"🖥️ **Machine Code:** `{raw_hwid}`\n"
         f"🔑 **Your Key:** `{final_key}` *(Tap to copy)*\n\n"
         "🎮 **How to activate:**\n"
@@ -530,7 +535,7 @@ def handle_other_messages(message):
         "👋 **Welcome to PCPortOP!**\n\n"
         "• To view all available games, send: `/start`\n"
         "• To unlock **GoW3 (V1)**, please send a **screenshot** showing you subscribed and commented on our YouTube video ([@pcportop](https://www.youtube.com/@pcportop))!\n"
-        "• To get a **V3 Activation Key**, simply send your Machine Code (e.g. `GOW3-XXXX-XXXX`)."
+        "• To get a **V4 Activation Key**, simply send your Machine Code (e.g. `GOW3-XXXX-XXXX`)."
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
