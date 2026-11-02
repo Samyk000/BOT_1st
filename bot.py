@@ -6,6 +6,7 @@ import os
 import json
 import re
 import threading
+import urllib.request
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -69,6 +70,29 @@ def generate_key_for_hwid(hwid: str) -> str:
     k2 = h & 0xFFFF
     return f"ACT-{k1:04X}-{k2:04X}"
 
+# --- Upstash Serverless Redis Integration (Cloud DB - Survives all redeploys) ---
+UPSTASH_REDIS_REST_URL = os.environ.get("UPSTASH_REDIS_REST_URL", "https://up-gobbler-246694.upstash.io")
+UPSTASH_REDIS_REST_TOKEN = os.environ.get("UPSTASH_REDIS_REST_TOKEN", "gQAAAAAAA8OmAAIgcDJiMTFmNjczYzZiZDk0YTljOTQ1MGU5ZmE3MDI2MzY1MQ")
+
+def redis_cmd(*args):
+    """Executes a command against Upstash Redis via its REST API (zero pip dependencies)."""
+    if not UPSTASH_REDIS_REST_URL or not UPSTASH_REDIS_REST_TOKEN:
+        return None
+    try:
+        req = urllib.request.Request(
+            UPSTASH_REDIS_REST_URL,
+            data=json.dumps(args).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {UPSTASH_REDIS_REST_TOKEN}",
+                "Content-Type": "application/json"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        logging.warning(f"Upstash Redis request warning: {e}")
+        return None
+
 # --- Data Persistence & Subscriber Progress Utilities ---
 
 def load_data():
@@ -77,28 +101,49 @@ def load_data():
         "target_subs": 500,
         "claimed_users": [],
         "user_profiles": {},
-        "activations": {}
+        "activations": {},
+        "verified_proof_users": []
     }
-    if not os.path.exists(DATA_FILE):
-        save_data(default_data)
-        return default_data
-    try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
+    # 1. Try loading from Upstash Redis (Permanent Cloud DB)
+    res = redis_cmd("GET", "pcportop_bot_data")
+    if res and res.get("result"):
+        try:
+            data = json.loads(res["result"])
             for k, v in default_data.items():
                 if k not in data:
                     data[k] = v
             return data
-    except Exception as e:
-        logging.error(f"Error loading bot_data.json: {e}")
-        return default_data
+        except Exception as e:
+            logging.error(f"Error parsing Upstash data: {e}")
+
+    # 2. Fallback to local file cache
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for k, v in default_data.items():
+                    if k not in data:
+                        data[k] = v
+                return data
+        except Exception as e:
+            logging.error(f"Error loading bot_data.json: {e}")
+
+    return default_data
 
 def save_data(data):
+    # 1. Save to Upstash Redis (Cloud DB - persists permanently across restarts & deployments)
+    try:
+        json_str = json.dumps(data, ensure_ascii=False)
+        redis_cmd("SET", "pcportop_bot_data", json_str)
+    except Exception as e:
+        logging.error(f"Error saving to Upstash Redis: {e}")
+
+    # 2. Also keep local disk copy as fallback cache
     try:
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        logging.error(f"Error saving bot_data.json: {e}")
+        logging.error(f"Error saving local bot_data.json: {e}")
 
 def record_user_claim(user):
     """Records unique V1 download claim and calculates current subscriber count."""

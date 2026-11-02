@@ -3,5 +3,6 @@
   "target_subs": 500,
   "claimed_users": [],
   "user_profiles": {},
-  "activations": {}
+  "activations": {},
+  "verified_proof_users": []
 }
