@@ -1,8 +1,586 @@
 {
-  "base_subs": 150,
+  "base_subs": 208,
   "target_subs": 500,
-  "claimed_users": [],
-  "user_profiles": {},
-  "activations": {},
-  "verified_proof_users": []
+  "claimed_users": [
+    "9024807254",
+    "6188050153",
+    "8501682682",
+    "7441847115",
+    "7993827863",
+    "7467307941",
+    "7622384679",
+    "7819845564",
+    "7851669954",
+    "7457977380",
+    "1439469507",
+    "1504231671",
+    "1035187660",
+    "5966560316",
+    "6687090608",
+    "7216918824",
+    "7697275866",
+    "7715586935",
+    "5148346909",
+    "2078265550",
+    "5920420326",
+    "7548030264",
+    "1052656748",
+    "8970180957",
+    "1073201438",
+    "9186465911",
+    "6565793944",
+    "5047370602",
+    "8783008032",
+    "566609796",
+    "7791718925",
+    "1838491585",
+    "1752617711"
+  ],
+  "user_profiles": {
+    "9024807254": {
+      "id": 9024807254,
+      "first_name": "Shubham",
+      "username": "",
+      "last_active": "2026-11-02 18:35:23 UTC"
+    },
+    "6188050153": {
+      "id": 6188050153,
+      "first_name": "Anikesh",
+      "username": "Anikesh6969",
+      "last_active": "2026-11-02 19:17:41 UTC"
+    },
+    "8501682682": {
+      "id": 8501682682,
+      "first_name": "Abençoados Por Deus",
+      "username": "",
+      "last_active": "2026-11-02 19:56:16 UTC"
+    },
+    "7441847115": {
+      "id": 7441847115,
+      "first_name": "Matheus",
+      "username": "",
+      "last_active": "2026-11-02 20:43:20 UTC"
+    },
+    "7993827863": {
+      "id": 7993827863,
+      "first_name": "john",
+      "username": "",
+      "last_active": "2026-11-03 00:15:16 UTC"
+    },
+    "7467307941": {
+      "id": 7467307941,
+      "first_name": ".",
+      "username": "Mostafa2006p",
+      "last_active": "2026-11-03 00:23:08 UTC"
+    },
+    "7622384679": {
+      "id": 7622384679,
+      "first_name": "Anthony",
+      "username": "",
+      "last_active": "2026-11-03 01:29:51 UTC"
+    },
+    "7819845564": {
+      "id": 7819845564,
+      "first_name": "King Jackson",
+      "username": "",
+      "last_active": "2026-11-03 03:17:04 UTC"
+    },
+    "7851669954": {
+      "id": 7851669954,
+      "first_name": "Carlos",
+      "username": "",
+      "last_active": "2026-11-03 03:34:12 UTC"
+    },
+    "7457977380": {
+      "id": 7457977380,
+      "first_name": "Abishek",
+      "username": "",
+      "last_active": "2026-11-03 04:56:10 UTC"
+    },
+    "1439469507": {
+      "id": 1439469507,
+      "first_name": "Vision",
+      "username": "Sri_vision",
+      "last_active": "2026-11-03 05:12:47 UTC"
+    },
+    "1504231671": {
+      "id": 1504231671,
+      "first_name": "WALEX",
+      "username": "Walex20x3",
+      "last_active": "2026-11-03 05:27:45 UTC"
+    },
+    "1035187660": {
+      "id": 1035187660,
+      "first_name": "Puji",
+      "username": "ParkAndriy",
+      "last_active": "2026-11-03 05:52:36 UTC"
+    },
+    "5966560316": {
+      "id": 5966560316,
+      "first_name": "Does it",
+      "username": "VictrBlaz2211",
+      "last_active": "2026-11-03 05:47:26 UTC"
+    },
+    "6687090608": {
+      "id": 6687090608,
+      "first_name": "Regin",
+      "username": "",
+      "last_active": "2026-11-03 06:25:27 UTC"
+    },
+    "7216918824": {
+      "id": 7216918824,
+      "first_name": "Bonjour",
+      "username": "",
+      "last_active": "2026-11-03 07:00:15 UTC"
+    },
+    "7697275866": {
+      "id": 7697275866,
+      "first_name": "Felix",
+      "username": "",
+      "last_active": "2026-11-03 07:28:58 UTC"
+    },
+    "7715586935": {
+      "id": 7715586935,
+      "first_name": "..",
+      "username": "",
+      "last_active": "2026-11-03 07:30:37 UTC"
+    },
+    "5148346909": {
+      "id": 5148346909,
+      "first_name": "Samaro",
+      "username": "known2223",
+      "last_active": "2026-11-03 10:32:55 UTC"
+    },
+    "2078265550": {
+      "id": 2078265550,
+      "first_name": "Benn beckman",
+      "username": "",
+      "last_active": "2026-11-03 13:02:24 UTC"
+    },
+    "5920420326": {
+      "id": 5920420326,
+      "first_name": "Ahmersheikh",
+      "username": "",
+      "last_active": "2026-11-03 13:08:58 UTC"
+    },
+    "7548030264": {
+      "id": 7548030264,
+      "first_name": "Rajkumar",
+      "username": "",
+      "last_active": "2026-11-03 13:09:13 UTC"
+    },
+    "1052656748": {
+      "id": 1052656748,
+      "first_name": "Spi.dey219",
+      "username": "spidey219",
+      "last_active": "2026-11-03 14:19:25 UTC"
+    },
+    "8970180957": {
+      "id": 8970180957,
+      "first_name": "Blax",
+      "username": "",
+      "last_active": "2026-11-03 14:43:47 UTC"
+    },
+    "1073201438": {
+      "id": 1073201438,
+      "first_name": "Cap",
+      "username": "CAPZOD",
+      "last_active": "2026-11-03 15:00:37 UTC"
+    },
+    "9186465911": {
+      "id": 9186465911,
+      "first_name": "Daniel",
+      "username": "",
+      "last_active": "2026-11-03 15:49:09 UTC"
+    },
+    "6565793944": {
+      "id": 6565793944,
+      "first_name": "Ali",
+      "username": "The_Aliyt0111",
+      "last_active": "2026-11-03 16:04:18 UTC"
+    },
+    "5047370602": {
+      "id": 5047370602,
+      "first_name": "Gabimaru",
+      "username": "Prince_Vegita_7",
+      "last_active": "2026-11-03 16:12:18 UTC"
+    },
+    "8783008032": {
+      "id": 8783008032,
+      "first_name": "Lemuel",
+      "username": "",
+      "last_active": "2026-11-03 16:10:25 UTC"
+    },
+    "566609796": {
+      "id": 566609796,
+      "first_name": "Pankaj",
+      "username": "Pankajsoniji1",
+      "last_active": "2026-11-03 17:02:47 UTC"
+    },
+    "7791718925": {
+      "id": 7791718925,
+      "first_name": "Ibrahim",
+      "username": "",
+      "last_active": "2026-11-03 17:39:26 UTC"
+    },
+    "1838491585": {
+      "id": 1838491585,
+      "first_name": "PROFIT",
+      "username": "",
+      "last_active": "2026-11-03 18:53:17 UTC"
+    },
+    "1752617711": {
+      "id": 1752617711,
+      "first_name": "M1lad",
+      "username": "Maybe_M1lad",
+      "last_active": "2026-11-03 19:20:40 UTC"
+    }
+  },
+  "activations": {
+    "5769193708": {
+      "username": "",
+      "first_name": "Teoo",
+      "devices": {
+        "GOW3-966C-DA11": {
+          "key": "ACT-C053-66BD",
+          "timestamp": "2026-11-02 18:02:05 UTC"
+        }
+      }
+    },
+    "7832777828": {
+      "username": "",
+      "first_name": "Juan Gabriel",
+      "devices": {
+        "GOW3-DA7C-3284": {
+          "key": "ACT-5718-7A1A",
+          "timestamp": "2026-11-02 19:00:50 UTC"
+        }
+      }
+    },
+    "9209936205": {
+      "username": "",
+      "first_name": "El Badboy",
+      "devices": {
+        "GOW3-ACE3-A276": {
+          "key": "ACT-1953-7E96",
+          "timestamp": "2026-11-02 20:46:02 UTC"
+        }
+      }
+    },
+    "7441847115": {
+      "username": "",
+      "first_name": "Matheus",
+      "devices": {
+        "GOW3-C4F2-20A6": {
+          "key": "ACT-7555-F054",
+          "timestamp": "2026-11-02 20:46:28 UTC"
+        }
+      }
+    },
+    "7647749898": {
+      "username": "",
+      "first_name": "pritiboi",
+      "devices": {
+        "GOW3-222F-B02F": {
+          "key": "ACT-43E9-3826",
+          "timestamp": "2026-11-02 21:31:43 UTC"
+        }
+      }
+    },
+    "784193037": {
+      "username": "taniu5",
+      "first_name": "🫥",
+      "devices": {
+        "GOW3-8EC2-DD67": {
+          "key": "ACT-18D3-9079",
+          "timestamp": "2026-11-03 00:15:54 UTC"
+        }
+      }
+    },
+    "7993827863": {
+      "username": "",
+      "first_name": "john",
+      "devices": {
+        "GOW3-0465-1FBA": {
+          "key": "ACT-1B97-FEAD",
+          "timestamp": "2026-11-03 00:27:13 UTC"
+        }
+      }
+    },
+    "7467307941": {
+      "username": "Mostafa2006p",
+      "first_name": ".",
+      "devices": {
+        "GOW3-26E7-30AE": {
+          "key": "ACT-4712-9EA5",
+          "timestamp": "2026-11-03 00:31:18 UTC"
+        }
+      }
+    },
+    "5550341505": {
+      "username": "",
+      "first_name": "Dhanish",
+      "devices": {
+        "GOW3-FA38-B326": {
+          "key": "ACT-4C0B-6D39",
+          "timestamp": "2026-11-03 00:46:18 UTC"
+        }
+      }
+    },
+    "7622384679": {
+      "username": "",
+      "first_name": "Anthony",
+      "devices": {
+        "GOW3-88D5-E962": {
+          "key": "ACT-B80D-2F3F",
+          "timestamp": "2026-11-03 01:35:22 UTC"
+        }
+      }
+    },
+    "5221295176": {
+      "username": "dFplePcX",
+      "first_name": "tharai",
+      "devices": {
+        "GOW3-3AFB-8EC9": {
+          "key": "ACT-20F5-E043",
+          "timestamp": "2026-11-03 01:56:26 UTC"
+        }
+      }
+    },
+    "9227720517": {
+      "username": "",
+      "first_name": "Yorsweet",
+      "devices": {
+        "GOW3-98CA-93F4": {
+          "key": "ACT-E2B1-F109",
+          "timestamp": "2026-11-03 02:51:22 UTC"
+        }
+      }
+    },
+    "7819845564": {
+      "username": "",
+      "first_name": "King Jackson",
+      "devices": {
+        "GOW3-6EA2-1CF1": {
+          "key": "ACT-F88E-A813",
+          "timestamp": "2026-11-03 03:26:46 UTC"
+        }
+      }
+    },
+    "6235952694": {
+      "username": "BeastT97",
+      "first_name": "Mausam",
+      "devices": {
+        "GOW3-4E72-A691": {
+          "key": "ACT-0A63-46C7",
+          "timestamp": "2026-11-03 03:41:45 UTC"
+        }
+      }
+    },
+    "1439469507": {
+      "username": "Sri_vision",
+      "first_name": "Vision",
+      "devices": {
+        "GOW3-38F9-4142": {
+          "key": "ACT-3320-A727",
+          "timestamp": "2026-11-03 05:34:43 UTC"
+        }
+      }
+    },
+    "1435176416": {
+      "username": "",
+      "first_name": "Ganesh",
+      "devices": {
+        "GOW3-F8F3-8E64": {
+          "key": "ACT-F434-793A",
+          "timestamp": "2026-11-03 06:44:34 UTC"
+        }
+      }
+    },
+    "7715586935": {
+      "username": "",
+      "first_name": "..",
+      "devices": {
+        "GOW3-6696-7F2D": {
+          "key": "ACT-E238-EA46",
+          "timestamp": "2026-11-03 07:33:30 UTC"
+        }
+      }
+    },
+    "9024807254": {
+      "username": "",
+      "first_name": "Shubham",
+      "devices": {
+        "GOW3-4686-B567": {
+          "key": "ACT-130D-D05A",
+          "timestamp": "2026-11-03 09:31:45 UTC"
+        }
+      }
+    },
+    "6760341618": {
+      "username": "",
+      "first_name": "Sat",
+      "devices": {
+        "GOW3-4028-3888": {
+          "key": "ACT-6FC1-8C31",
+          "timestamp": "2026-11-03 09:41:45 UTC"
+        }
+      }
+    },
+    "5934356575": {
+      "username": "Dranzerrrrrrr",
+      "first_name": "EL",
+      "devices": {
+        "GOW3-1CB8-5B56": {
+          "key": "ACT-D23A-CE36",
+          "timestamp": "2026-11-03 10:56:09 UTC"
+        }
+      }
+    },
+    "7119522529": {
+      "username": "xophier",
+      "first_name": "X",
+      "devices": {
+        "GOW3-1C49-60CE": {
+          "key": "ACT-ECC4-CD57",
+          "timestamp": "2026-11-03 11:16:27 UTC"
+        }
+      }
+    },
+    "5036055691": {
+      "username": "",
+      "first_name": "Ρa🅝官⎝",
+      "devices": {
+        "GOW3-FC86-7991": {
+          "key": "ACT-9F20-2BF9",
+          "timestamp": "2026-11-03 14:34:40 UTC"
+        }
+      }
+    },
+    "8262745966": {
+      "username": "",
+      "first_name": "Noah",
+      "devices": {
+        "GOW3-6A64-9A68": {
+          "key": "ACT-780C-C32D",
+          "timestamp": "2026-11-03 14:55:25 UTC"
+        }
+      }
+    },
+    "8783008032": {
+      "username": "",
+      "first_name": "Lemuel",
+      "devices": {
+        "GOW3-4E2D-DDDE": {
+          "key": "ACT-F317-9A80",
+          "timestamp": "2026-11-03 16:17:08 UTC"
+        }
+      }
+    },
+    "1716009268": {
+      "username": "niloy5468",
+      "first_name": "Al Mukit Muktafin",
+      "devices": {
+        "GOW3-FEF3-0799": {
+          "key": "ACT-4E41-07C9",
+          "timestamp": "2026-11-03 16:35:37 UTC"
+        }
+      }
+    },
+    "8725705472": {
+      "username": "",
+      "first_name": "Xaero",
+      "devices": {
+        "GOW3-E050-F720": {
+          "key": "ACT-DEB0-4155",
+          "timestamp": "2026-11-03 19:21:30 UTC"
+        }
+      }
+    },
+    "6243141367": {
+      "username": "",
+      "first_name": "M",
+      "devices": {
+        "GOW3-686E-B40B": {
+          "key": "ACT-BB28-3985",
+          "timestamp": "2026-11-03 20:23:10 UTC"
+        }
+      }
+    }
+  },
+  "verified_proof_users": [
+    "5769193708",
+    "8628340853",
+    "6466666558",
+    "553002493",
+    "9024807254",
+    "6055311398",
+    "5744948658",
+    "7832777828",
+    "1870261758",
+    "6188050153",
+    "1189023572",
+    "8501682682",
+    "1922778490",
+    "7441847115",
+    "9209936205",
+    "7647749898",
+    "7347998889",
+    "7993827863",
+    "6047870056",
+    "784193037",
+    "7467307941",
+    "5550341505",
+    "9023889721",
+    "7622384679",
+    "5221295176",
+    "7965757199",
+    "9227720517",
+    "6466896504",
+    "7819845564",
+    "7851669954",
+    "6235952694",
+    "1435176416",
+    "7457977380",
+    "1439469507",
+    "1504231671",
+    "1035187660",
+    "5966560316",
+    "6687090608",
+    "1844190233",
+    "7216918824",
+    "7715586935",
+    "7697275866",
+    "903229504",
+    "6760341618",
+    "5148346909",
+    "5934356575",
+    "7119522529",
+    "1129351480",
+    "6332620957",
+    "6243141367",
+    "6118753742",
+    "2078265550",
+    "5920420326",
+    "7548030264",
+    "8262745966",
+    "1052656748",
+    "5036055691",
+    "8970180957",
+    "1073201438",
+    "8325118225",
+    "9186465911",
+    "6565793944",
+    "5047370602",
+    "8783008032",
+    "1716009268",
+    "566609796",
+    "7791718925",
+    "1838491585",
+    "1752617711",
+    "8725705472"
+  ],
+  "sub_bell_verified_users": [],
+  "comment_verified_users": [],
+  "pending_hwid_requests": {}
 }

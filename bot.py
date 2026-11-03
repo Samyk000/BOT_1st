@@ -33,24 +33,8 @@ DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bot_data.j
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="Markdown")
 
-# Track users who have submitted their screenshot in this session
+# Session caches
 screenshot_submitted_users = set()
-
-# Track pending HWID requests waiting for screenshot proof
-pending_hwid_requests = {}
-
-def mark_user_proof_verified(user_id: int):
-    data = load_data()
-    if "verified_proof_users" not in data:
-        data["verified_proof_users"] = []
-    user_id_str = str(user_id)
-    if user_id_str not in data["verified_proof_users"]:
-        data["verified_proof_users"].append(user_id_str)
-        save_data(data)
-
-def is_user_proof_verified(user_id: int) -> bool:
-    data = load_data()
-    return str(user_id) in data.get("verified_proof_users", [])
 
 
 # --- Cryptographic Key Engine ---
@@ -102,7 +86,10 @@ def load_data():
         "claimed_users": [],
         "user_profiles": {},
         "activations": {},
-        "verified_proof_users": []
+        "verified_proof_users": [],
+        "sub_bell_verified_users": [],
+        "comment_verified_users": [],
+        "pending_hwid_requests": {}
     }
     # 1. Try loading from Upstash Redis (Permanent Cloud DB)
     res = redis_cmd("GET", "pcportop_bot_data")
@@ -144,6 +131,64 @@ def save_data(data):
             json.dump(data, f, indent=2, ensure_ascii=False)
     except Exception as e:
         logging.error(f"Error saving local bot_data.json: {e}")
+
+# --- Verification State Helpers (Sunk Cost Split Verification) ---
+
+def mark_user_sub_bell_verified(user_id: int):
+    data = load_data()
+    if "sub_bell_verified_users" not in data:
+        data["sub_bell_verified_users"] = []
+    user_id_str = str(user_id)
+    if user_id_str not in data["sub_bell_verified_users"]:
+        data["sub_bell_verified_users"].append(user_id_str)
+        save_data(data)
+
+def is_user_sub_bell_verified(user_id: int) -> bool:
+    data = load_data()
+    user_id_str = str(user_id)
+    return (user_id_str in data.get("sub_bell_verified_users", []) or 
+            user_id_str in data.get("verified_proof_users", []))
+
+def mark_user_comment_verified(user_id: int):
+    data = load_data()
+    if "comment_verified_users" not in data:
+        data["comment_verified_users"] = []
+    user_id_str = str(user_id)
+    if user_id_str not in data["comment_verified_users"]:
+        data["comment_verified_users"].append(user_id_str)
+        save_data(data)
+
+def is_user_comment_verified(user_id: int) -> bool:
+    data = load_data()
+    user_id_str = str(user_id)
+    if user_id_str in data.get("comment_verified_users", []):
+        return True
+    if user_id_str in data.get("activations", {}):
+        return True
+    return False
+
+def set_pending_hwid(user_id: int, hwid: str):
+    data = load_data()
+    if "pending_hwid_requests" not in data:
+        data["pending_hwid_requests"] = {}
+    data["pending_hwid_requests"][str(user_id)] = hwid
+    save_data(data)
+
+def get_pending_hwid(user_id: int) -> str:
+    data = load_data()
+    return data.get("pending_hwid_requests", {}).get(str(user_id))
+
+def clear_pending_hwid(user_id: int):
+    data = load_data()
+    if "pending_hwid_requests" in data and str(user_id) in data["pending_hwid_requests"]:
+        del data["pending_hwid_requests"][str(user_id)]
+        save_data(data)
+
+def mark_user_proof_verified(user_id: int):
+    mark_user_sub_bell_verified(user_id)
+
+def is_user_proof_verified(user_id: int) -> bool:
+    return is_user_sub_bell_verified(user_id)
 
 def record_user_claim(user):
     """Records unique V1 download claim and calculates current subscriber count."""
@@ -243,18 +288,18 @@ def get_games_menu_markup():
 
 def get_gow3_steps_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_yt_sub = types.InlineKeyboardButton("📺 1. Subscribe to YouTube Channel", url=YOUTUBE_CHANNEL_URL)
-    btn_yt_vid = types.InlineKeyboardButton("🎬 2. Watch, Like & Comment Video", url=YOUTUBE_VIDEO_URL)
+    btn_yt_sub = types.InlineKeyboardButton("📺 1. Subscribe & Turn On Bell (🔔)", url=YOUTUBE_CHANNEL_URL)
+    btn_tg = types.InlineKeyboardButton("📢 2. Join Telegram Channel (@pcportop)", url=CHANNEL_URL)
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_yt_sub, btn_yt_vid, btn_back)
+    markup.add(btn_yt_sub, btn_tg, btn_back)
     return markup
 
 def get_verified_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_v1 = types.InlineKeyboardButton("📥 Download GoW3 (V1 - No Crash)", callback_data="dl_gow3")
     btn_v4 = types.InlineKeyboardButton("⚡ Download GoW3 (V4 - 2X FPS & Low-End/iGPU Boost)", callback_data="gow3_v4_info")
+    btn_v1 = types.InlineKeyboardButton("📥 Download GoW3 (V1 - No Crash)", callback_data="dl_gow3")
     btn_back = types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
-    markup.add(btn_v1, btn_v4, btn_back)
+    markup.add(btn_v4, btn_v1, btn_back)
     return markup
 
 def get_post_download_markup():
@@ -294,17 +339,21 @@ def handle_stats(message):
     activations_dict = data.get("activations", {})
     total_keys = sum(len(u.get("devices", {})) for u in activations_dict.values())
     total_active_users = len(activations_dict)
+    sub_bell_count = len(data.get("sub_bell_verified_users", [])) + len(data.get("verified_proof_users", []))
+    comment_count = len(data.get("comment_verified_users", []))
     
     stats_text = (
         "📊 **PCPortOP Bot Live Stats**\n\n"
         f"👥 **Unique V1 Downloaders:** `{claimed_count}`\n"
+        f"🔔 **Sub+Bell Verified (Gate 1):** `{sub_bell_count}`\n"
+        f"💬 **Comment Verified (Gate 2):** `{comment_count}`\n"
         f"🔑 **V4 Keys Issued:** `{total_keys}` (across `{total_active_users}` users)\n"
         f"📈 **Base Subs Config:** `{data.get('base_subs', 150)}`\n"
         f"🚀 **Current Displayed Subs:** `{current_subs}` / `{target_subs}`\n"
         f"📊 **V4 Progress:** {progress_str}\n\n"
         "⚙️ **Admin Quick Sync:**\n"
         "To update the base YouTube subscriber count, send:\n"
-        "`/setsubs <number>` (e.g. `/setsubs 180`)"
+        "`/setsubs <number>` (e.g. `/setsubs 215`)"
     )
     bot.reply_to(message, stats_text)
 
@@ -343,9 +392,9 @@ def handle_gow3(call):
         "⚔️ **God of War III Remastered (PC Port)**\n"
         "⚡ **100% Crash-Proof & 60+ FPS Build [VERIFIED]**\n\n"
         "🎮 **To unlock your Google Drive download link:**\n\n"
-        "1️⃣ Tap button 1 below to **Subscribe** to our Channel *(tap 'Subscribe' on popup)*.\n"
-        "2️⃣ Tap button 2 to **Watch, Like & Comment** your PC specs *(e.g. \"Testing on Intel Iris Xe\" or \"AMD Ryzen\")*.\n\n"
-        "📸 **Send a screenshot of your comment below to unlock the final step!** 👇"
+        "1️⃣ Tap button 1 below to **Subscribe** & turn notification bell to **'All' (🔔)**.\n"
+        "2️⃣ Tap button 2 to **Join** our Telegram updates channel.\n\n"
+        "📸 **Send a screenshot showing you Subscribed with Bell set to All (🔔) right here to unlock the download!** 👇"
     )
     bot.edit_message_text(gow3_text, call.message.chat.id, call.message.message_id, reply_markup=get_gow3_steps_markup(), disable_web_page_preview=True)
 
@@ -380,6 +429,26 @@ def handle_channel_join(chat_member_update):
                 user_id = user.id
                 logging.info(f"User {user_id} joined {CHANNEL_USERNAME}!")
                 
+                # Check if this user had a pending HWID request and was comment verified
+                pending_hwid = get_pending_hwid(user_id)
+                if pending_hwid and is_user_comment_verified(user_id):
+                    clear_pending_hwid(user_id)
+                    key = generate_key_for_hwid(pending_hwid)
+                    success, final_key, status = record_activation_key(user, pending_hwid, key)
+                    if success:
+                        key_text = (
+                            "🎉 **Channel Joined & Verified!** 🚀\n\n"
+                            "⚔️ **God of War III (V4) — Activation Key**\n\n"
+                            f"🖥️ **Machine Code:** `{pending_hwid}`\n"
+                            f"🔑 **Your Key:** `{final_key}` *(Tap to copy)*\n\n"
+                            "📋 **How to activate:**\n"
+                            "1. Rename file to **`spartanport-probe.exe`** inside game's **`bin`** folder.\n"
+                            "2. Paste key into activation window.\n"
+                            "3. Click **\"⚔️ UNLOCK & LAUNCH GAME\"**."
+                        )
+                        bot.send_message(user_id, key_text)
+                        return
+
                 welcome_text = (
                     "🎉 **Verification Successful!** 🚀\n\n"
                     "⚔️ **God of War III PC Port**\n"
@@ -395,34 +464,61 @@ def handle_channel_join(chat_member_update):
 
 @bot.message_handler(content_types=["photo"])
 def handle_screenshot(message):
-    user_id = message.from_user.id
-    screenshot_submitted_users.add(user_id)
-    mark_user_proof_verified(user_id)
+    user = message.from_user
+    user_id = user.id
     
-    # Check if this user had a pending HWID waiting for proof!
-    if user_id in pending_hwid_requests:
-        hwid = pending_hwid_requests.pop(user_id)
-        if is_user_in_channel(user_id):
-            key = generate_key_for_hwid(hwid)
-            success, final_key, status = record_activation_key(message.from_user, hwid, key)
-            if success:
-                key_text = (
-                    "🎉 **Proof Verified & Approved!** 🚀\n\n"
-                    "🔑 **Your God of War III Activation Key:**\n"
-                    f"`{final_key}`\n\n"
-                    "📋 *Tap the key above to copy it, paste it into the game's activation box, and click UNLOCK & LAUNCH GAME!*\n\n"
-                    "🎮 *Thank you for supporting @Samyyyyyk and PCPortOP! Enjoy the game!*"
-                )
-                bot.reply_to(message, key_text)
-                return
+    # Check if this user had a pending HWID waiting for comment proof (Gate 2)
+    pending_hwid = get_pending_hwid(user_id)
+    if pending_hwid:
+        mark_user_comment_verified(user_id)
+        clear_pending_hwid(user_id)
+        
+        # Check channel membership
+        if not is_user_in_channel(user_id):
+            join_warning = (
+                "📸 **Specs Comment Screenshot Received! One Final Step:**\n\n"
+                "📢 Join our official Telegram Channel **@pcportop** to receive your activation key!\n\n"
+                "*(⚡ As soon as you tap Join Channel, the bot will automatically issue your key!)*"
+            )
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                types.InlineKeyboardButton("📢 Join Telegram Channel (@pcportop)", url=CHANNEL_URL),
+                types.InlineKeyboardButton("🔓 I've Joined — Get Activation Key", callback_data="verify_channel_after_screenshot"),
+                types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
+            )
+            bot.reply_to(message, join_warning, reply_markup=markup)
+            return
 
-    # EDGE CASE: User is ALREADY in the Telegram channel!
+        key = generate_key_for_hwid(pending_hwid)
+        success, final_key, status = record_activation_key(user, pending_hwid, key)
+        if success:
+            key_text = (
+                "🎉 **Specs Comment Verified & Approved!** 🚀\n\n"
+                "⚔️ **God of War III (V4) — Activation Key**\n\n"
+                f"🖥️ **Machine Code:** `{pending_hwid}`\n"
+                f"🔑 **Your Key:** `{final_key}` *(Tap to copy)*\n\n"
+                "📋 **How to activate:**\n"
+                "1. Ensure the file is renamed to **`spartanport-probe.exe`** inside your game's **`bin`** folder.\n"
+                "2. Paste this key into the activation window.\n"
+                "3. Click **\"⚔️ UNLOCK & LAUNCH GAME\"**.\n\n"
+                "🎮 *Thank you for supporting @Samyyyyyk and PCPortOP! Enjoy smooth 60 FPS gameplay!*"
+            )
+            bot.reply_to(message, key_text)
+            return
+        elif status == "limit_reached":
+            bot.reply_to(message, "⚠️ **Activation Limit Reached:** Each Telegram user can activate up to 2 PCs.")
+            return
+
+    # No pending HWID request: This is Gate 1 (Subscribe + Bell Notification)
+    mark_user_sub_bell_verified(user_id)
+    
+    # Check if user is already in channel
     if is_user_in_channel(user_id):
         success_text = (
-            "🎉 **Verification Successful!** 🚀\n\n"
+            "🎉 **Subscription Verified!** 🚀\n\n"
             "⚔️ **God of War III PC Port**\n"
             "• 100% Crash-Proof on Intel & AMD integrated graphics.\n\n"
-            "💡 *If you already have the game installed, send your **Machine Code** (`GOW3-XXXX-XXXX`) here to get your activation key!*\n\n"
+            "💡 *Once you launch the game, copy your **Machine Code** (`GOW3-XXXX-XXXX`) and send it here to get your activation key!*\n\n"
             "📥 **Choose your build to download:**"
         )
         bot.reply_to(message, success_text, reply_markup=get_verified_markup())
@@ -430,13 +526,13 @@ def handle_screenshot(message):
 
     # User has NOT joined the channel yet:
     join_warning = (
-        "📸 **Screenshot Received! One Final Step:**\n\n"
+        "📸 **Subscription Screenshot Received! One Final Step:**\n\n"
         "📢 Join our official Telegram Channel **@pcportop** to unlock your GoW3 download!\n\n"
         "*(⚡ As soon as you tap Join Channel, the bot will automatically send you the download options!)*"
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("📢 3. Join Telegram Channel (@pcportop)", url=CHANNEL_URL),
+        types.InlineKeyboardButton("📢 Join Telegram Channel (@pcportop)", url=CHANNEL_URL),
         types.InlineKeyboardButton("🔓 I've Joined — Get Downloads", callback_data="verify_channel_after_screenshot"),
         types.InlineKeyboardButton("🔙 Back to Games Menu", callback_data="main_menu")
     )
@@ -444,11 +540,35 @@ def handle_screenshot(message):
 
 @bot.callback_query_handler(func=lambda call: call.data == "verify_channel_after_screenshot")
 def handle_verify_channel_after_screenshot(call):
-    if not is_user_in_channel(call.from_user.id):
+    user = call.from_user
+    user_id = user.id
+    if not is_user_in_channel(user_id):
         bot.answer_callback_query(call.id, text="⚠️ You haven't joined @pcportop yet! Please tap 'Join Telegram Channel' first.", show_alert=True)
         return
         
     bot.answer_callback_query(call.id, text="🎉 Channel verified!")
+    
+    # Check if they had a pending HWID request and were comment verified
+    pending_hwid = get_pending_hwid(user_id)
+    if pending_hwid and is_user_comment_verified(user_id):
+        clear_pending_hwid(user_id)
+        key = generate_key_for_hwid(pending_hwid)
+        success, final_key, status = record_activation_key(user, pending_hwid, key)
+        if success:
+            key_text = (
+                "🎉 **Channel Joined & Verified!** 🚀\n\n"
+                "⚔️ **God of War III (V4) — Activation Key**\n\n"
+                f"🖥️ **Machine Code:** `{pending_hwid}`\n"
+                f"🔑 **Your Key:** `{final_key}` *(Tap to copy)*\n\n"
+                "📋 **How to activate:**\n"
+                "1. Ensure the file is renamed to **`spartanport-probe.exe`** inside your game's **`bin`** folder.\n"
+                "2. Paste this key into the activation window.\n"
+                "3. Click **\"⚔️ UNLOCK & LAUNCH GAME\"**.\n\n"
+                "🎮 *Thank you for supporting @Samyyyyyk and PCPortOP! Enjoy smooth 60 FPS gameplay!*"
+            )
+            bot.send_message(call.message.chat.id, key_text)
+            return
+
     success_text = (
         "🎉 **Verification Successful!** 🚀\n\n"
         "⚔️ **God of War III PC Port**\n"
@@ -509,7 +629,8 @@ def handle_download_gow3(call):
 @bot.message_handler(func=lambda msg: bool(msg.text and HWID_REGEX.match(msg.text.strip())))
 def handle_hwid_code(message):
     raw_hwid = message.text.strip().upper()
-    user_id = message.from_user.id
+    user = message.from_user
+    user_id = user.id
     
     # 1. Verify channel membership first
     if not is_user_in_channel(user_id):
@@ -525,27 +646,28 @@ def handle_hwid_code(message):
         bot.reply_to(message, join_msg, reply_markup=markup)
         return
     
-    # 2. Verify YouTube like/subscribe screenshot proof
-    if not is_user_proof_verified(user_id) and user_id not in screenshot_submitted_users:
-        pending_hwid_requests[user_id] = raw_hwid
+    # 2. Check if user has verified comment proof (Gate 2)
+    if not is_user_comment_verified(user_id):
+        set_pending_hwid(user_id, raw_hwid)
         proof_msg = (
-            "🔒 **Almost There! One Final Step to Unlock Your Key**\n\n"
-            "To unlock your **God of War III** Activation Key:\n\n"
-            "1️⃣ **Watch, Like & Subscribe** on our YouTube video.\n"
-            "2️⃣ **Send a screenshot of your subscription & like right here in this chat!**\n\n"
-            "📸 *The moment you send the screenshot, the bot will instantly deliver your activation key!*"
+            "🔒 **Almost Done! Final Step to Unlock Your Key**\n\n"
+            "To generate your permanent **God of War III (V4)** Activation Key:\n\n"
+            "1️⃣ Tap button 1 below to open our YouTube video.\n"
+            "2️⃣ **Like the video & Comment your PC specs** *(e.g. \"Testing on Intel Iris Xe / i5 11th Gen\" or \"AMD Ryzen 5600G\")*.\n"
+            "3️⃣ **Send a screenshot of your comment right here in this chat!**\n\n"
+            "📸 *The instant you send the screenshot, the bot will automatically deliver your activation key!*"
         )
         markup = types.InlineKeyboardMarkup(row_width=1)
         markup.add(
-            types.InlineKeyboardButton("▶️ Watch, Like & Subscribe on YouTube", url=YOUTUBE_VIDEO_URL),
+            types.InlineKeyboardButton("🎬 1. Watch, Like & Comment Specs", url=YOUTUBE_VIDEO_URL),
             types.InlineKeyboardButton("📢 Official Channel (@pcportop)", url=CHANNEL_URL)
         )
-        bot.reply_to(message, proof_msg, reply_markup=markup)
+        bot.reply_to(message, proof_msg, reply_markup=markup, disable_web_page_preview=True)
         return
 
-    # 3. Generate matching key
+    # 3. User is comment-verified: Generate matching key
     key = generate_key_for_hwid(raw_hwid)
-    success, final_key, status = record_activation_key(message.from_user, raw_hwid, key)
+    success, final_key, status = record_activation_key(user, raw_hwid, key)
     
     if not success and status == "limit_reached":
         limit_msg = (
@@ -556,7 +678,7 @@ def handle_hwid_code(message):
         bot.reply_to(message, limit_msg)
         return
     
-    # 3. Deliver activation key
+    # 4. Deliver activation key
     key_msg = (
         "⚔️ **God of War III (V4) — Activation Key**\n\n"
         f"🖥️ **Machine Code:** `{raw_hwid}`\n"
@@ -579,7 +701,7 @@ def handle_other_messages(message):
     msg_text = (
         "👋 **Welcome to PCPortOP!**\n\n"
         "• To view all available games, send: `/start`\n"
-        "• To unlock **GoW3 (V1)**, please send a **screenshot** showing you subscribed and commented on our YouTube video ([@pcportop](https://www.youtube.com/@pcportop))!\n"
+        "• To unlock **GoW3 downloads**, tap `/start` and send a **screenshot** showing you Subscribed with the bell icon on (🔔)!\n"
         "• To get a **V4 Activation Key**, simply send your Machine Code (e.g. `GOW3-XXXX-XXXX`)."
     )
     markup = types.InlineKeyboardMarkup(row_width=1)
