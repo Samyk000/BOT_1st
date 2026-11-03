@@ -22,7 +22,7 @@ CHANNEL_USERNAME = "@pcportop"
 CHANNEL_URL = "https://t.me/pcportop"
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@pcportop?sub_confirmation=1"
 YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=RRTnew63j48"
-GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1UIO6dNy72uMxKjJEaTpGc_l4FpF-t9hC/view?usp=sharing"
+GOW3_DOWNLOAD_URL = "https://drive.google.com/file/d/1bDTWecK6uI9tkWlIuS3tnZaHYDOgH6r6/view?usp=sharing"
 GOW3_V4_DOWNLOAD_URL = "https://drive.google.com/file/d/105NH1hQgfnUr1GhIMOix2NkNLAKidYf1/view?usp=sharing"
 
 SECRET_SALT = "PCPortOP_Demo_Secret_2026"
@@ -620,6 +620,10 @@ def handle_download_gow3(call):
     post_dl_text = (
         "🚀 **Your GoW3 Crash-Proof Build (V1) is ready!**\n\n"
         f"📦 **[Click here to open Google Drive]({GOW3_DOWNLOAD_URL})**\n\n"
+        "⚠️ **Instructions:**\n"
+        "1. Rename downloaded file to: **`spartanport-probe.exe`**\n"
+        "2. Paste & replace inside your game's **`bin`** folder.\n"
+        "3. Launch game -> copy your **Machine Code** (`GOW3-XXXX-XXXX`) -> send it here in chat to get your permanent Activation Key!\n\n"
         "💬 *After testing, please leave a comment on the video with your PC specs! 🎮*"
     )
     bot.send_message(call.message.chat.id, post_dl_text, reply_markup=get_post_download_markup(), disable_web_page_preview=True)
